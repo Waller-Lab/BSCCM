@@ -46,8 +46,30 @@ class BSBCM:
             return np.array(image)
         return image
         
-    def has_histology_mask(self):
-        return self.dataframe['matched_histology_cell'].to_numpy()
+    def get_indices(self, batch=None, replicate=None, marker=None, 
+                    has_matched_histology=False, shuffle=False):
+        sub_data_frame = self.dataframe
+        if batch is not None:
+            sub_data_frame = sub_data_frame[sub_data_frame.batch == batch]
+        if replicate is not None:
+            sub_data_frame = sub_data_frame[sub_data_frame.replicate == replicate]
+        if marker is not None:
+            sub_data_frame = sub_data_frame[sub_data_frame.marker == marker]
+        if has_matched_histology:
+            sub_data_frame = sub_data_frame[sub_data_frame.matched_histology_cell]
+        
+        indices = sub_data_frame.index.to_numpy()
+        if shuffle:
+            np.random.shuffle(indices)
+        return indices
+    
+    def get_raw_fluor(indices):
+        """
+        Get the raw fluorescence measurements summed over image as N x D matrix
+        """
+        channel_names = ['BV421', 'BV510', 'BV570', 'BV605', 'BV650', 'BV711']
+        return self.dataframe.iloc[indices][channel_names].to_numpy()
+        
     
     def plot_montage(self, indices, contrast_type='dpc', channel=None,  size=(10, 10)):
         """
