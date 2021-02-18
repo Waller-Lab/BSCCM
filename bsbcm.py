@@ -87,6 +87,6 @@ class BSBCM:
             images = images / (2 ** 12) #12 bit image
         for index, image in enumerate(images):
             ax = plt.subplot(gs1[index])
-            ax.imshow(image)
+            ax.imshow(image, cmap='inferno')
             ax.set_axis_off()
             
