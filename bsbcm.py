@@ -89,4 +89,18 @@ class BSBCM:
             ax = plt.subplot(gs1[index])
             ax.imshow(image, cmap='inferno')
             ax.set_axis_off()
-            
+    
+    def compute_mean_sd(self, indices, contrast_types, channels, num=1000, shuffle=True):
+        """
+        Compute the mean and SD of a random subset of images
+
+        """
+        #shuffle
+        np.random.seed(1234)
+        indices = np.random.choice(indices, size=(num,))
+        all_means, all_stddevs = [], []
+        for contrast_type, channel in zip(contrast_types, channels):
+            images = [self.read_image(index, contrast_type=contrast_type, channel=channel) for index in indices]
+            all_means.append(np.mean(images, axis=(0, 1, 2)))
+            all_stddevs.append(np.std(images, axis=(0, 1, 2)))
+        return np.array(all_means), np.array(all_stddevs)
