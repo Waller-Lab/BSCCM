@@ -54,7 +54,10 @@ class BSBCM:
         if replicate is not None:
             sub_data_frame = sub_data_frame[sub_data_frame.replicate == replicate]
         if marker is not None:
-            sub_data_frame = sub_data_frame[sub_data_frame.marker == marker]
+            if type(marker) == list:
+                sub_data_frame = sub_data_frame[sub_data_frame.marker.isin(marker)]    
+            else:
+                sub_data_frame = sub_data_frame[sub_data_frame.marker == marker]
         if has_matched_histology:
             sub_data_frame = sub_data_frame[sub_data_frame.matched_histology_cell]
         
