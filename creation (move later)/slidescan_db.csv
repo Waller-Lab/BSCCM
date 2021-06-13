@@ -27,3 +27,7 @@ Index,Magellan,Fullname,raw_crops backup,Imaging date,Batch,Chamber ID,Stain,# c
 25,Flatfield 10x10_1,,,2018-9-20,,Flatfield,,,,,,/2018-9-20 Flatfield/Flatfield 10x10_1_magellan_split,,,/2018-9-20 Flatfield/Flatfield 10x10_1,,/2018-9-20 Flatfield/Flatfield 10x10_1_magellan_split,
 26,Slidescan 2-0b_1,2-0b,,2018-9-20,2.0,0b,unstained,100k,,,,/2018-9-20 Slide 2-0b/Slidescan 2-0b_1_magellan_split,,,/2018-9-20 Slide 2-0b/Slidescan 2-0b_1,,/2018-9-20 Flatfield/Flatfield 10x10_1_magellan_split,unstained
 27,Slidescan 2-1_1,2-1,,2018-9-21,2.0,1,BV421,110k,,,,/2018-9-21 Slide 2-1/Slidescan 2-1_1_magellan_split,,,/2018-9-21 Slide 2-1/Slidescan 2-1_1,,/2018-9-20 Flatfield/Flatfield 10x10_1_magellan_split,CD123
+28,,,,2018-9-23,2,1,all,110k,,,,/2018-9-21 Slide 2-1/Slidescan 2-1_1_magellan_split,,,/2018-9-21 Slide 2-1/Slidescan 2-1_1,,/2018-9-20 Flatfield/Flatfield 10x10_1_magellan_split,all
+29,,,,2018-9-23,2,1,all,110k,,,,/2018-9-21 Slide 2-1/Slidescan 2-1_1_magellan_split,,,/2018-9-21 Slide 2-1/Slidescan 2-1_1,,/2018-9-20 Flatfield/Flatfield 10x10_1_magellan_split,all
+30,,,,2018-9-24,2,1,unstained,110k,,,,/2018-9-21 Slide 2-1/Slidescan 2-1_1_magellan_split,,,/2018-9-21 Slide 2-1/Slidescan 2-1_1,,/2018-9-20 Flatfield/Flatfield 10x10_1_magellan_split,unstained
+31,,,,2018-9-24,2,1,unstained,110k,,,,/2018-9-21 Slide 2-1/Slidescan 2-1_1_magellan_split,,,/2018-9-21 Slide 2-1/Slidescan 2-1_1,,/2018-9-20 Flatfield/Flatfield 10x10_1_magellan_split,unstained
