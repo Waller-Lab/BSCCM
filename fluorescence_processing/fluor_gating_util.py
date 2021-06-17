@@ -26,7 +26,7 @@ class ScatterSelectorGating:
     Master class that controls a bunch of subplots
     """
 
-    def __init__(self, dataframe, initial_mask, channel_names, 
+    def __init__(self, dataframe, initial_mask, channel_names, dataframe_saving_fullpath=None,
                  img_fig=None, read_image_fn=None, num_cols=2, export_dir=None):
         """
         
@@ -60,6 +60,7 @@ class ScatterSelectorGating:
             if plot_index is None:
                 return
             self.subplots[plot_index].set_channels(ch_x, ch_y)
+            self.update_limit_sliders(self.subplots[plot_index])
         
         #Correctly update selected channels when changing plots
         def update_display_channels(*args):
@@ -82,16 +83,28 @@ class ScatterSelectorGating:
             if hasattr(current_subplot, 'path'): 
                 current_subplot.finalize_selection()
                 if self.plot_index_button.value == len(self.subplots) - 1:
+#                     new_row = len(self.subplots) % num_cols == 0
                     #make a new terminal subplot
                     self.add_subplot(current_subplot) 
+                    #clear selection
+                    self.set_selection(None)
+#                     if new_row:
+#                         new_num_rows = np.ceil(len(self.subplots) / num_cols)
+#                         size = self.fig.get_size_inches()
+#                         new_size = [size[0], size[1] * new_num_rows / (new_num_rows - 1)]
+#                         print(size, new_size)
+#                         self.fig.set_size_inches(new_size)
                 else:
                     # intermediate selection updated
-                    self.selections_updated()
+                    self.gates_updated()
 
         gate_button = widgets.Button(description='Gate selection')                
         gate_button.on_click(do_gating) 
         button_list.append(gate_button)
 
+        clear_button = widgets.Button(description='Clear selection')                
+        clear_button.on_click(lambda widget: self.set_selection(None)) 
+        button_list.append(clear_button)
         
         # Button for showing image montage
         if read_image_fn is not None:
@@ -100,69 +113,202 @@ class ScatterSelectorGating:
             montage_button = widgets.Button(description='Show images')                
             montage_button.on_click(show_montage)
             button_list.append(montage_button)
-                              
+                     
+        
+        self.density_scaling_slider = widgets.FloatLogSlider(
+                value=1,
+                base=10,
+                min=-2,
+                max=0,
+                step=0.01,
+                description='Density scale:',
+                continuous_update=False,
+                orientation='horizontal',
+                readout=True,
+                readout_format='.2f',
+            )
+      
+        def denisty_scale_fn(button):
+            for sp in self.subplots:
+                sp.apply_color()
+        self.density_scaling_slider.observe(denisty_scale_fn, names='value')
+        button_list.append(self.density_scaling_slider)
+                
+        display(widgets.HBox(button_list))
+        
+        ### Controls for marking populations in the dataframe
+        button_list_2 = []
+        new_selection_name = widgets.Text(
+            value='name',
+            placeholder='',
+            description=''
+        )
+
+        def save_selected_population(button):
+            current_subplot = self.subplots[self.plot_index_button.value]
+            if hasattr(current_subplot, 'path'): 
+                name = 'selection_' + new_selection_name.value
+                self.dataframe = self.dataframe.assign(**{name: False})
+                self.dataframe.loc[self.selected_indices, name] = True
+                self.show_population_dropdown.options = self.show_population_dropdown.options + (new_selection_name.value,)
+                
+                for subplot in self.subplots:
+                    subplot.apply_color()
+                
+                self.dataframe.to_csv(dataframe_saving_fullpath, index=False)
+                
+
+        save_selection_button = widgets.Button(description='Save selection')                
+        save_selection_button.on_click(save_selected_population) 
+        
+        
+        names = [col.split('selection_')[-1] for col in self.dataframe.columns if 'selection_' in col]
+        self.show_population_dropdown = widgets.Dropdown(
+                options=names,
+                value=names[0] if len(names) > 0 else None,
+                description='Show:',
+                disabled=False,
+            )
+        def dropdown_callback(widget):
+            for sp in self.subplots:
+                sp.apply_color()
+                
+        self.show_population_dropdown.observe(dropdown_callback, names='value')
+
+     
+        button_list_2.append(new_selection_name)
+        button_list_2.append(save_selection_button)
+        button_list_2.append(self.show_population_dropdown)
+        
+        display(widgets.HBox(button_list_2))
+
+        
+        button_list_3 = []
+
+        self.manual_axes = False
+        manual_axes_button = widgets.ToggleButton(
+            value=False,
+            description='Manual axes',
+        )
+        def manual_axes_fn(button):
+            self.manual_axes = manual_axes_button.value
+            self.x_lim_slider.disabled = not self.manual_axes
+            self.y_lim_slider.disabled = not self.manual_axes
+            
+            if not self.manual_axes:
+                self.subplots[self.plot_index_button.value].autoscale_xy_limits()
+                
+        manual_axes_button.observe(manual_axes_fn, names='value')
+        
+        button_list_3.append(manual_axes_button)        
+        
+        all_data = self.dataframe[self.channel_names].to_numpy()
+        data_min, data_max = np.min(all_data), np.max(all_data)
+        slider_min = data_min - 0.05 * (data_max - data_min)
+        slider_max = data_max + 0.05 * (data_max - data_min)
+    
+        self.x_lim_slider = widgets.FloatRangeSlider(
+            value=[0, 1],
+            disabled=True,
+            min=slider_min,
+            max=slider_max,
+            step=1,
+            description='x range:',
+            continuous_update=False,
+            orientation='horizontal',
+            readout=True,
+            readout_format='d',
+        )
+        
+        self.y_lim_slider = widgets.FloatRangeSlider(
+            value=[0, 1],
+            disabled=True,
+            min=slider_min,
+            max=slider_max,
+            step=1,
+            description='y range:',
+            continuous_update=False,
+            orientation='horizontal',
+            readout=True,
+            readout_format='d',
+        )
+        
+        def set_x_limits_fn(widget):
+            if not self.manual_axes:
+                return
+            self.subplots[self.plot_index_button.value].facs_ax.set_xlim(
+                  (self.x_lim_slider.value[0], self.x_lim_slider.value[1])) 
+
+        def set_y_limits_fn(widget):
+            if not self.manual_axes:
+                return
+            self.subplots[self.plot_index_button.value].facs_ax.set_ylim(
+                  (self.y_lim_slider.value[0], self.y_lim_slider.value[1])) 
+
+        self.x_lim_slider.observe(set_x_limits_fn, names='value')
+        self.y_lim_slider.observe(set_y_limits_fn, names='value')
+        
+        button_list_3.append(self.x_lim_slider)
+        button_list_3.append(self.y_lim_slider)
+        
+        
+        display(widgets.HBox(button_list_3))
+        
         
         # Button for exporting plot
         if export_dir is not None:
-            box = widgets.Text(
+            export_text_box = widgets.Text(
                 value='Export_name.pdf',
                 placeholder='',
                 description=''
             )
 
             def export_fig(button):
-                self.fig.savefig(export_dir + box.value, transparent=True)
-                print('Saved to {}{}'.sformat(export_dir, box.value))
+                self.fig.savefig(export_dir + export_text_box.value, transparent=True)
+                print('Saved to {}{}'.format(export_dir, export_text_box.value))
 
             export_button = widgets.Button(description='Export figure')                
             export_button.on_click(export_fig) 
-            button_list.append(box)
-            button_list.append(export_button)
-        
-        
-        display(widgets.HBox(button_list))
-        
-        ### Controls for marking populations in the dataframe
-        button_list_2 = []
-        selection_box = widgets.Text(
-            value='name',
-            placeholder='',
-            description=''
-        )
+            
+            display(widgets.HBox([export_text_box, export_button]))
 
-        def select_population(button):
-            print('Saving selection...')
-            current_subplot = self.subplots[self.plot_index_button.value]
-            if hasattr(current_subplot, 'path'): 
-                selected_global_indices = current_subplot.finalize_selection()
-                name = 'selection_' + selection_box.value
-                self.dataframe.loc[selected_global_indices, name] = True
-            print('Complete...')
-
-        save_selection_button = widgets.Button(description='Save selection')                
-        save_selection_button.on_click(select_population) 
-        button_list_2.append(selection_box)
-        button_list_2.append(save_selection_button)
-        
-        display(widgets.HBox(button_list_2))
-        
         
         self.selected_index = None
         self.path = None
         self.canvas = self.fig.canvas  
         self.change_data(initial_mask)
         self.add_subplot(None)
-
+        
+    def update_limit_sliders(self, caller, xlim=None, ylim=None):
+#         print(xlim, ylim, self.x_lim_slider.min, self.y_lim_slider.min)
+        if caller not in self.subplots:
+            return #intializing
+        if xlim is None:
+            xlim = caller.facs_ax.get_xlim()
+            ylim = caller.facs_ax.get_ylim()
+        if self.subplots.index(caller) == self.plot_index_button.value:
+            self.x_lim_slider.value = xlim            
+            self.y_lim_slider.value = ylim
+            
     def change_data(self, mask):
         #Change the underlying data
 #         self.subplots = []
 #         self.fig.clf()
-        
-        #TODO: re add subplots with same gates but different masked data
-        
+
+        #update slider range
+#         all_data = self.dataframe.loc[mask, self.channel_names].to_numpy()
+#         slider_min = 0.8 * np.min(all_data)
+#         slider_max = 1.2 * np.max(all_data)
+#         self.x_lim_slider.max = slider_max
+#         self.y_lim_slider.max = slider_max
+#         self.x_lim_slider.min = slider_min
+#         self.y_lim_slider.min = slider_min
+
+                
         
         self.all_indices = self.dataframe.loc[np.flatnonzero(mask)].global_index.to_numpy()
-        self.selections_updated()
+
+        self.gates_updated()
 #         self.add_subplot(None)
         
     def add_subplot(self, parent_subplot):
@@ -199,7 +345,7 @@ class ScatterSelectorGating:
             ax.imshow(image, cmap='inferno')
             ax.set_axis_off()
             
-    def selections_updated(self):
+    def gates_updated(self):
         """
         One of the subplots has had a gate change. Move through all of them to update plots
         """
@@ -207,7 +353,7 @@ class ScatterSelectorGating:
             sp.update_plot()
             
     def set_active_subplot(self, subplot):
-        print('setting active subplot ' + str(subplot))
+
         index = self.subplots.index(subplot)
         new_ch_x = self.subplots[index].ch_x
         new_ch_y = self.subplots[index].ch_y
@@ -224,6 +370,7 @@ class ScatterSelectorSubplot:
     def __init__(self, main, parent, plot_index, ch_x, ch_y):   
         self.main = main
         self.parent = parent
+        self.collection = None
         if parent is None: #0th plot
             self.sub_indices = main.all_indices
         else: # >= 1st plot
@@ -258,6 +405,22 @@ class ScatterSelectorSubplot:
         self.ch_x = ch_x
         self.ch_y = ch_y
         self.update_plot()
+        self.apply_color()
+        self.main.canvas.draw()
+        
+    def autoscale_xy_limits(self):
+        all_x_data = self.main.dataframe.loc[self.main.all_indices, self.ch_x]
+        all_y_data = self.main.dataframe.loc[self.main.all_indices, self.ch_y]
+        min_x = np.min(all_x_data)
+        min_y = np.min(all_y_data)
+        max_x = np.max(all_x_data)
+        max_y = np.max(all_y_data)
+        range_x = max_x - min_x
+        range_y = max_y - min_y
+        
+        self.facs_ax.set_xlim([min_x - 0.05 * range_x, max_x + 0.05 * range_x])
+        self.facs_ax.set_ylim([min_y - 0.05 * range_y, max_y + 0.05 * range_y])
+        self.main.update_limit_sliders(self, self.facs_ax.get_xlim(), self.facs_ax.get_ylim())
     
     def update_plot(self):
         #updat the selected points
@@ -265,6 +428,13 @@ class ScatterSelectorSubplot:
             self.sub_indices = self.main.all_indices
         else: # >= 1st plot
             self.sub_indices = self.parent.get_selected_indices()
+        
+        #Do scatter plot
+        if self.collection is not None and self.main.manual_axes:
+            limits = ((self.main.x_lim_slider.value[0], self.main.x_lim_slider.value[1]),
+                      (self.main.y_lim_slider.value[0], self.main.y_lim_slider.value[1]))
+        else: 
+            limits = None
         
         self.facs_ax.clear()
         # get data
@@ -274,9 +444,11 @@ class ScatterSelectorSubplot:
         xy = np.vstack([x_data, y_data])
         #Compute point density
         kde_source_points = 1000 #trades offf accuracy and speed
-        kde_indices = np.random.choice(xy.shape[1], kde_source_points)
-
-        self.density = gaussian_kde(xy[:, kde_indices])(xy)
+        if xy.shape[1] != 0:
+            kde_indices = np.random.choice(xy.shape[1], kde_source_points)
+            self.density = gaussian_kde(xy[:, kde_indices])(xy)
+        else: 
+            self.density= None
                 
         if hasattr(self, 'selection_patch') and self.selection_patch is not None:
             self.selection_patch.remove()
@@ -292,43 +464,77 @@ class ScatterSelectorSubplot:
         self.selector = PolygonSelector(self.facs_ax, onselect=self.onselect,
                                        lineprops={'color':'g'})
 
-        #Do scatter plot
+
+            
         self.collection = self.facs_ax.scatter(x_data, y_data, 
                                                c=self.density, s=20, cmap='inferno')
+             
         self.facs_ax.ticklabel_format(scilimits=[-2, 2])
 
         self.facs_ax.set_xlabel(self.ch_x)
         self.facs_ax.set_ylabel(self.ch_y)
         
-        all_x_data = self.main.dataframe.loc[self.main.all_indices, self.ch_x]
-        all_y_data = self.main.dataframe.loc[self.main.all_indices, self.ch_y]
-        self.facs_ax.set_xlim([0.8 * np.min(all_x_data), 1.1 * np.max(all_x_data)])
-        self.facs_ax.set_ylim([0.8 * np.min(all_y_data), 1.1 * np.max(all_y_data)])
+        if limits is not None:
+            self.facs_ax.set_xlim(limits[0])
+            self.facs_ax.set_ylim(limits[1])
+        else:
+            self.autoscale_xy_limits()
+        self.main.update_limit_sliders(self, self.facs_ax.get_xlim(), self.facs_ax.get_ylim())
         
 #         self.facs_ax.set_ylim([6.5, 17])
 #         self.facs_ax.set_xlim([6.5, 17])
+        self.apply_color()
+
         
     def apply_color(self):
-        color_norm = colors.Normalize(vmin=np.min(self.density), vmax=np.max(self.density))
+        ## apply density mapping coloring
+        min_val = np.min(self.density)
+        max_val = np.max(self.density)
+        max_val = (max_val - min_val) * self.main.density_scaling_slider.value
+
+        color_norm = colors.Normalize(vmin=min_val, vmax=max_val)
         m = cm.ScalarMappable(norm=color_norm, cmap=cm.inferno)
         rgba_base = m.to_rgba(self.density)
         
-        color_norm = colors.Normalize(vmin=np.min(self.density), vmax=np.max(self.density))
-        m = cm.ScalarMappable(norm=color_norm, cmap=cm.winter)
-        rgba_selection = m.to_rgba(self.density)
-        rgba_base[self.selection] = rgba_selection[self.selection]
+    
+#         min_val = np.min(self.density)
+#         max_val = np.max(self.density)
+#         exp = self.main.density_scaling_slider.value
+#         color_norm = colors.Normalize(vmin=min_val ** exp, vmax=max_val ** exp)
+#         m = cm.ScalarMappable(norm=color_norm, cmap=cm.inferno)
+#         rgba_base = m.to_rgba(self.density ** exp)
+        
+        
+        
+        #special coloring for other selections
+        for col_name in self.main.dataframe.columns:
+            if 'selection_' in col_name:
+                name = col_name.split('selection_')[-1]
+                
+                if self.main.show_population_dropdown.value == name:
+                    mask = self.main.dataframe.loc[self.sub_indices, col_name].to_numpy()
+                    rgba = np.array([0, 1, 0, 1.])
+                    rgba_base[mask] = rgba
+    
+        #special coloring for current selection
+        if hasattr(self, 'selection') and self.selection is not None:
+            color_norm = colors.Normalize(vmin=np.min(self.density), vmax=np.max(self.density))
+            m = cm.ScalarMappable(norm=color_norm, cmap=cm.winter)
+            rgba_selection = m.to_rgba(self.density)
+            rgba_base[self.selection] = rgba_selection[self.selection]
     
         self.collection.set_color(rgba_base)
+        self.main.canvas.draw()
      
     def finalize_selection(self):
         #Create a patch marking the indices selected, and return them for making a new plot
-        print('finalizing selection')
    
         self.patch_ch_x, self.patch_ch_y = self.ch_x, self.ch_y
         self.selection_patch = patches.PathPatch(self.path, facecolor='none', edgecolor='cyan',lw=2)
         self.facs_ax.add_patch(self.selection_patch)
-        self.main.canvas.draw_idle()
-        self.main.selections_updated()
+#         self.main.canvas.draw_idle()
+        self.main.gates_updated()
+        
         
     def onselect(self, verts):
         #Re add first point so path closes properly

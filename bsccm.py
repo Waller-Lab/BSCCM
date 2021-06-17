@@ -9,14 +9,16 @@ import json
 class BSCCM:
 
     def __init__(self, data_root):
-        self.zarr_dataset = zarr.open(data_root + 'BSCCM_images_dpc32.zarr', 'r')
+        self.zarr_dataset = zarr.open(data_root + 'BSCCM_images.zarr', 'r')
         self.index_dataframe = pd.read_csv(data_root + 'BSCCM_index.csv', low_memory=False)
         self.global_metadata = json.loads(open(data_root + 'BSCCM_global_metadata.json').read())
         self.size = len(self.index_dataframe)
+        self.fluor_channel_names = self.global_metadata['fluorescence']['channel_names']
+        self.led_array_channel_names = self.global_metadata['led_array']['channel_names']
         if 'BSCCM_surface_markers.csv' in os.listdir(data_root):
             self.surface_marker_dataframe = pd.read_csv(data_root + 'BSCCM_surface_markers.csv')
-        if 'BSCCM_backgrounds_and_shading.zarr' in os.listdir(data_root):
-            self.backgrounds_and_shading = zarr.open(data_root + 'BSCCM_backgrounds_and_shading.zarr', 'r')
+        if 'BSCCM_shading.zarr' in os.listdir(data_root):
+            self.backgrounds_and_shading = zarr.open(data_root + 'BSCCM_shading.zarr', 'r')
 
     
     def read_image(self, index, contrast_type, channel=None, copy=False):
@@ -28,10 +30,10 @@ class BSCCM:
         base_path = entry['data_path'] + '/'
         if contrast_type == 'led_array':
             base_path += contrast_type
-            channel_index = self.global_metadata['led_array']['channel_names'].index(channel)
+            channel_index = self.led_array_channel_names.index(channel)
         elif contrast_type == 'fluor':
             base_path += contrast_type
-            channel_index = self.global_metadata['fluorescence']['channel_names'].index(channel)
+            channel_index = self.fluor_channel_names.index(channel)
         elif contrast_type == 'dpc':
             base_path += contrast_type
             channel_index = 0
@@ -49,18 +51,18 @@ class BSCCM:
             return np.array(image)
         return image
         
-    def get_indices(self, batch=None, slide_replicate=None, marker=None, 
+    def get_indices(self, batch=None, slide_replicate=None, antibodies=None, 
                     has_matched_histology=False, shuffle=False):
         sub_data_frame = self.index_dataframe
         if batch is not None:
             sub_data_frame = sub_data_frame[sub_data_frame.batch == batch]
         if slide_replicate is not None:
             sub_data_frame = sub_data_frame[sub_data_frame.slide_replicate == slide_replicate]
-        if marker is not None:
-            if type(marker) == list:
-                sub_data_frame = sub_data_frame[sub_data_frame.marker.isin(marker)]    
+        if antibodies is not None:
+            if type(antibodies) == list:
+                sub_data_frame = sub_data_frame[sub_data_frame.antibodies.isin(antibodies)]    
             else:
-                sub_data_frame = sub_data_frame[sub_data_frame.marker == marker]
+                sub_data_frame = sub_data_frame[sub_data_frame.antibodies == antibodies]
         if has_matched_histology:
             sub_data_frame = sub_data_frame[sub_data_frame.matched_histology_cell]
         
