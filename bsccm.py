@@ -8,11 +8,16 @@ import json
 
 class BSCCM:
 
-    def __init__(self, data_root):
+    def __init__(self, data_root, cache_index=False):
+        """
+        
+        data_root: path to the top-level BSCCM directory
+        cache_index: load the full index into memory. Set to true for increased performance at the expense of memory usage
+        """
         print('Opening BSCCM (this may take a few seconds)...')
         self.data_root = data_root
         self.zarr_dataset = zarr.open(data_root + 'BSCCM_images.zarr', 'r')
-        self.index_dataframe = pd.read_csv(data_root + 'BSCCM_index.csv', low_memory=True)
+        self.index_dataframe = pd.read_csv(data_root + 'BSCCM_index.csv', low_memory=not cache_index)
         self.global_metadata = json.loads(open(data_root + 'BSCCM_global_metadata.json').read())
         self.size = len(self.index_dataframe)
         self.fluor_channel_names = self.global_metadata['fluorescence']['channel_names']
@@ -68,7 +73,7 @@ class BSCCM:
         if slide_replicate is not None:
             sub_data_frame = sub_data_frame[sub_data_frame.slide_replicate == slide_replicate]
         if antibodies is not None:
-            if type(antibodies) == list:
+            if type(antibodies) == list or type(antibodies) == tuple:
                 sub_data_frame = sub_data_frame[sub_data_frame.antibodies.isin(antibodies)]    
             else:
                 sub_data_frame = sub_data_frame[sub_data_frame.antibodies == antibodies]
