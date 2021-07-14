@@ -44,7 +44,6 @@ class ScatterSelectorGating:
         dimensions['slide_replicate']  = bsccm.index_dataframe['slide_replicate'].unique().tolist()
 
         self.log_plot = False
-        self.log_data_min = 1e-2
         # Setup top controls for selecting antobody/batch/slide
         selector = None
         def on_value_change(change):
@@ -72,7 +71,6 @@ class ScatterSelectorGating:
         self.channel_names = channel_names
         self.dataframe = dataframe
         self.read_image_fn = read_image_fn
-        self.channel_names = channel_names
         self.subplots = []
 
         #Create buttons for changing plot and channel
@@ -293,7 +291,8 @@ class ScatterSelectorGating:
             
             #Change range of limit sliders
             if self.log_plot:
-                data_min, data_max = np.log(np.min(all_data + self.log_data_min)), np.log(np.max(all_data) + self.log_data_min)
+                log_data_min = self.log_min_slider.value
+                data_min, data_max = np.log(np.min(all_data + log_data_min)), np.log(np.max(all_data) + log_data_min)
                 slider_min = data_min - 0.05 * (data_max - data_min)
                 slider_max = data_max + 0.05 * (data_max - data_min)
                 self.x_lim_slider.step = 0.01
@@ -315,15 +314,30 @@ class ScatterSelectorGating:
             
             self.update_all_plots()
             
-            
-            
             if not self.manual_axes:
                 self.subplots[self.plot_index_button.value].autoscale_xy_limits()
                 
         log_plot_button.observe(log_plot_fn, names='value')
-        
         button_list_4.append(log_plot_button) 
         
+        self.log_min_slider = widgets.FloatLogSlider(
+                value=-6,
+                base=10,
+                min=-6,
+                max=2,
+                step=0.1,
+                description='Log min:',
+                continuous_update=False,
+                orientation='horizontal',
+                readout=True,
+                readout_format='.3f',
+            )
+      
+       
+        self.log_min_slider.observe(log_plot_fn, names='value')
+        button_list_4.append(self.log_min_slider)
+        
+    
         display(widgets.HBox(button_list_4))
         
         # Button for exporting plot
@@ -384,20 +398,6 @@ class ScatterSelectorGating:
             
     def change_data(self, mask):
         #Change the underlying data
-#         self.subplots = []
-#         self.fig.clf()
-
-        #update slider range
-#         all_data = self.dataframe.loc[mask, self.channel_names].to_numpy()
-#         slider_min = 0.8 * np.min(all_data)
-#         slider_max = 1.2 * np.max(all_data)
-#         self.x_lim_slider.max = slider_max
-#         self.y_lim_slider.max = slider_max
-#         self.x_lim_slider.min = slider_min
-#         self.y_lim_slider.min = slider_min
-
-                
-        
         self.all_indices = self.dataframe.loc[np.flatnonzero(mask)].global_index.to_numpy()
 
         self.update_all_plots()
@@ -505,10 +505,10 @@ class ScatterSelectorSubplot:
         all_y_data = self.main.dataframe.loc[self.main.all_indices, self.ch_y]
 
         if self.main.log_plot:
-            min_x = np.log(np.min(all_x_data) + self.main.log_data_min)
-            min_y = np.log(np.min(all_y_data) + self.main.log_data_min)
-            max_x = np.log(np.max(all_x_data) + self.main.log_data_min)
-            max_y = np.log(np.max(all_y_data) + self.main.log_data_min)
+            min_x = np.log(np.min(all_x_data) + self.main.log_min_slider.value)
+            min_y = np.log(np.min(all_y_data) + self.main.log_min_slider.value)
+            max_x = np.log(np.max(all_x_data) + self.main.log_min_slider.value)
+            max_y = np.log(np.max(all_y_data) + self.main.log_min_slider.value)
             range_x = max_x - min_x
             range_y = max_y - min_y
         else: 
@@ -540,9 +540,10 @@ class ScatterSelectorSubplot:
         # get data
         x_data = self.main.dataframe.loc[self.sub_indices, self.ch_x]
         y_data = self.main.dataframe.loc[self.sub_indices, self.ch_y]
+        
         if self.main.log_plot:
-            x_data = np.log(self.main.log_data_min + x_data)
-            y_data = np.log(self.main.log_data_min + y_data)
+            x_data = np.log(self.main.log_min_slider.value + x_data)
+            y_data = np.log(self.main.log_min_slider.value + y_data)
         xy = np.vstack([x_data, y_data])
         
         #Compute point density

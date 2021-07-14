@@ -143,9 +143,6 @@ class BSCCM:
 
         images = np.stack([self.read_image(index=i, contrast_type=contrast_type, channel=channel)
                   for i in indices], axis=0)
-        if contrast_type == 'histology':
-            #mpl doesnt show 16 bit rgb so convert to float
-            images = images / (2 ** 12) #12 bit image
         for index, image in enumerate(images):
             ax = plt.subplot(gs1[index])
             ax.imshow(image, cmap='inferno')
