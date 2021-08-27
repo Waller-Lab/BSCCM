@@ -1,4 +1,7 @@
 import numpy as np
+import matplotlib
+matplotlib.rcParams['pdf.fonttype'] = 42
+matplotlib.rcParams['ps.fonttype'] = 42
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import ipywidgets as widgets
@@ -348,12 +351,12 @@ class ScatterSelectorGating:
                 description=''
             )
 
-            def export_fig(button):
+            def export_fig_fig(button):
                 self.fig.savefig(export_dir + export_text_box.value, transparent=True)
                 print('Saved to {}{}'.format(export_dir, export_text_box.value))
 
             export_button = widgets.Button(description='Export figure')                
-            export_button.on_click(export_fig) 
+            export_button.on_click(export_fig_fig) 
             
             display(widgets.HBox([export_text_box, export_button]))
 
@@ -367,20 +370,20 @@ class ScatterSelectorGating:
         
         #Creat a figure for visualizing images and add a button for exporting
         self.img_fig = plt.figure(figsize=(4,4))
-        export_text_box = widgets.Text(
+        export_text_box_img = widgets.Text(
                         value='Export_name.pdf',
                         placeholder='',
                         description=''
                     )
 
         def export_fig(button):
-            self.fig.savefig(export_dir + box.value, transparent=True)
-            print('Saved to {}{}'.sformat(export_dir, box.value))
+            self.img_fig.savefig(export_dir + export_text_box_img.value, transparent=True)
+            print('Saved to {}{}'.format(export_dir, export_text_box_img.value))
 
         export_button = widgets.Button(description='Export figure')                
         export_button.on_click(export_fig) 
 
-        display(widgets.HBox([export_text_box, export_button]))
+        display(widgets.HBox([export_text_box_img, export_button]))
 
         #intialize
         on_value_change(None)
@@ -570,7 +573,7 @@ class ScatterSelectorSubplot:
 
 
         self.collection = self.facs_ax.scatter(x_data, y_data, 
-                                               c=self.density, s=20, cmap='inferno')
+                                               c=self.density, s=20, cmap='inferno', rasterized=True)
              
         self.facs_ax.ticklabel_format(scilimits=[-2, 2])
 

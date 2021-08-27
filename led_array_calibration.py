@@ -121,6 +121,9 @@ def illumination_to_led_indices(channel):
     if channel == 'LED119':
         return [119]
     
+    if 'led'in channel:
+        return [int(channel.split('_')[-1])]
+    
     def include_fn(na, na_xy):
         mask = np.array(na.size * [True])
         if channel == 'Brightfield':

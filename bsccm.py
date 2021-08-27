@@ -66,7 +66,7 @@ class BSCCM:
         return image
         
     def get_indices(self, batch=None, slide_replicate=None, antibodies=None, 
-                    has_matched_histology=False, shuffle=False):
+                    has_matched_histology=False, shuffle=False, seed=None):
         sub_data_frame = self.index_dataframe
         if batch is not None:
             sub_data_frame = sub_data_frame[sub_data_frame.batch == batch]
@@ -82,6 +82,8 @@ class BSCCM:
         
         indices = sub_data_frame.index.to_numpy()
         if shuffle:
+            if seed is not None:
+                np.random.seed(seed)
             np.random.shuffle(indices)
         return indices
     
