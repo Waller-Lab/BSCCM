@@ -99,13 +99,13 @@ def plot_led_pattern(led_indices=None, channel_name=None, ax=None, legend=True, 
     if ax is None:
         ax = plt.gca()
     all_led_list = np.array([get_led_na_xy(led) for led in range(1, 582)])
-    plt.scatter(all_led_list[:,0], all_led_list[:,1], size, marker=',', color=[0.15,0.15,0.15], 
+    ax.scatter(all_led_list[:,0], all_led_list[:,1], size, marker=',', color=[0.15,0.15,0.15], 
                 facecolor=None,edgecolor=None, edgecolors=None)
-    plt.gca().set_facecolor([0,0,0])
+    ax.set_facecolor([0,0,0])
     
     for led_index in led_indices:
         nax, nay = get_led_na_xy(led_index) 
-        plt.scatter(nax, nay, size, marker='s', color=[0,1.0,0], 
+        ax.scatter(nax, nay, size, marker='s', color=[0,1.0,0], 
                     facecolor=None, edgecolor=None, edgecolors=None)
     ax.add_patch(plt.Circle((0, 0), 0.5, alpha=0.25))
     ax.set_xlabel('Numerical aperture (x)')
