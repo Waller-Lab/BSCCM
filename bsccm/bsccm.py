@@ -12,7 +12,10 @@ class BSCCM:
         data_root: path to the top-level BSCCM directory
         cache_index: load the full index into memory. Set to true for increased performance at the expense of memory usage
         """
-        print('Opening BSCCM (this may take a few seconds)...\r', end='')
+        
+        # TODO add sensing of trailing string
+        
+        print('Opening BSCCM (this may take a few seconds)...')
         self.data_root = data_root
         self.zarr_dataset = zarr.open(data_root + 'BSCCM_images.zarr', 'r')
         self.index_dataframe = pd.read_csv(data_root + 'BSCCM_index.csv', low_memory=not cache_index, index_col='global_index')
@@ -24,9 +27,18 @@ class BSCCM:
             self.surface_marker_dataframe = pd.read_csv(data_root + 'BSCCM_surface_markers.csv', index_col='global_index')
         if 'BSCCM_backgrounds.zarr' in os.listdir(data_root):
             self.backgrounds_and_shading = zarr.open(data_root + 'BSCCM_backgrounds.zarr', 'r')
-        print('BSCCM Opened                                     ')
+        print('Opened {}'.format(str(self)))
 
+        #TODO: add width and height
+        
+        #TODO: read specific name from global metadata
+        
+    def __str__(self):
+        return self.global_metadata['name']
     
+    def __repr__(self):
+        return str(self)
+        
     def read_image(self, index, contrast_type, channel=None, copy=False, convert_histology_rgb32=True):
         """
         
@@ -34,7 +46,9 @@ class BSCCM:
         
         contrast_type: 'led_array', 'fluor', 'dpc', 'histology'
         """
-        
+        if index not in self.index_dataframe.index:
+            raise Exception('{} is not a valid index into this dataset. Try using .get_indices to find a valid index'.format(index))
+
         entry = self.index_dataframe.loc[index]
         base_path = entry['data_path'] + '/'
         if contrast_type == 'led_array':
@@ -45,8 +59,8 @@ class BSCCM:
             channel_index = self.fluor_channel_names.index(channel)
         elif contrast_type == 'dpc':
             base_path += contrast_type
-            channel_index = 0
-        elif contrast_type == 'histology':
+            channel_index = None
+        elif contrast_type == 'histology' :
             base_path += contrast_type
             channel_index = None
         else:
@@ -56,12 +70,12 @@ class BSCCM:
         if channel_index is not None:
             image = image[channel_index]
         
-        if contrast_type == 'histology' and convert_histology_rgb32:
+        if contrast_type == 'histology' and convert_histology_rgb32 and 'MNIST' not in self.global_metadata['name']:
             image = np.array(image) / (2 ** 12)
             
         if copy:
-            return np.array(image)
-        return image
+            return np.array(np.squeeze(image))
+        return np.squeeze(image)
         
     def get_indices(self, batch=None, slide_replicate=None, antibodies=None, 
                     has_matched_histology=False, shuffle=False, seed=None):
