@@ -3,6 +3,21 @@ import numpy as np
 import zarr
 import os
 import json
+import warnings
+import requests
+import tarfile
+
+
+def download_data(mnist=True, coherent=False, tiny=False):
+    """
+    Download one of the 6 possible versions of BSCCM dataset
+    
+    mnist: download BSCCMNIST (downsized and downsampled version of BSCCM)
+    coherent: download BSCCM-coherent or BSCCM-coherent-tiny
+    tiny: the tiny version or the full version
+    """
+
+    pass
 
 class BSCCM:
 
@@ -12,14 +27,13 @@ class BSCCM:
         data_root: path to the top-level BSCCM directory
         cache_index: load the full index into memory. Set to true for increased performance at the expense of memory usage
         """
-        
-        # TODO add sensing of trailing string
-        
-        print('Opening BSCCM (this may take a few seconds)...')
+        self.global_metadata = json.loads(open(data_root + 'BSCCM_global_metadata.json').read())  
+        print('Opening {}'.format(str(self)))
+        if data_root[-1] != os.sep:
+            data_root += os.sep
         self.data_root = data_root
         self.zarr_dataset = zarr.open(data_root + 'BSCCM_images.zarr', 'r')
         self.index_dataframe = pd.read_csv(data_root + 'BSCCM_index.csv', low_memory=not cache_index, index_col='global_index')
-        self.global_metadata = json.loads(open(data_root + 'BSCCM_global_metadata.json').read())
         self.size = len(self.index_dataframe)
         self.fluor_channel_names = self.global_metadata['fluorescence']['channel_names']
         self.led_array_channel_names = self.global_metadata['led_array']['channel_names']
@@ -141,6 +155,9 @@ class BSCCM:
         contrast_type: 'led_array', 'fluor', 'dpc', 'histology'
         percentile: 5, 10, 20, 40, 50 (median) 
         """
+        if 'MNIST' in str(self) or 'tiny' in str(self):
+            warnings.warn('Backgrounds not included in {}'.format(str(self)))
+        
         if percentile not in [5, 10, 20, 40, 50]:
             raise Exception('percentile must be one of: [5, 10, 20, 40, 50]')
         

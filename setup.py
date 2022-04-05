@@ -26,7 +26,8 @@ setuptools.setup(
     install_requires=[
         "numpy",
         "pandas",
-        "zarr"
+        "zarr",
+        "requests"
     ],
     python_requires=">=3.6",
     classifiers=[
