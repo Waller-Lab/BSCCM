@@ -17,7 +17,44 @@ def download_data(mnist=True, coherent=False, tiny=False):
     tiny: the tiny version or the full version
     """
 
-    pass
+
+    location = '/home/hpinkard_waller/2tb_ssd/'
+    doi_url = 'doi%3A10.5061%2Fdryad.9pg8d'
+    version_index = -1
+    file_index = 1
+
+    # Get the version ID of the dataset
+    api_url = "https://datadryad.org/api/v2/"
+    versions = requests.get(api_url + 'datasets/{}/versions'.format(doi_url))
+    version_id = versions.json()['_embedded']['stash:versions'][version_index]['_links']['self']['href'].split('/')[version_index]
+
+    # Get the URL to download one particular file
+    file = requests.get(api_url + 'versions/' + version_id + '/files').json()['_embedded']['stash:files'][file_index]
+    file_name = file['path']
+    download_url = 'https://datadryad.org' + file['_links']['stash:download']['href']
+
+    # Download in chunks (so that really big files can be downloaded)
+    chunk_size = 1024 * 1024 * 8
+    iters = file['size'] / chunk_size
+    with requests.get(download_url, stream=True) as r:
+        r.raise_for_status()
+        with open(location + file_name, 'wb') as f:
+            for i, chunk in enumerate(r.iter_content(chunk_size=chunk_size)): 
+                print('Downloading {}, {:.1f}%\r'.format(file_name, 100 * i / iters ), end='')
+                f.write(chunk)
+    print('Finished downloading')
+
+
+    loc = location + file_name[:-7] #remove .tar.gz
+    print('Extracting to  {}...'.format(loc))
+    file = tarfile.open(location + file_name)
+    file.extractall(loc)
+    file.close()
+    print('Cleaning up')
+    os.remove(location + file_name)
+    print('Complete')
+
+
 
 class BSCCM:
 
