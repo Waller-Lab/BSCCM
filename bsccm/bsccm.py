@@ -3,6 +3,58 @@ import numpy as np
 import zarr
 import os
 import json
+import warnings
+import requests
+import tarfile
+
+
+def download_data(mnist=True, coherent=False, tiny=False):
+    """
+    Download one of the 6 possible versions of BSCCM dataset
+    
+    mnist: download BSCCMNIST (downsized and downsampled version of BSCCM)
+    coherent: download BSCCM-coherent or BSCCM-coherent-tiny
+    tiny: the tiny version or the full version
+    """
+
+
+    location = '/home/hpinkard_waller/2tb_ssd/'
+    doi_url = 'doi%3A10.5061%2Fdryad.9pg8d'
+    version_index = -1
+    file_index = 1
+
+    # Get the version ID of the dataset
+    api_url = "https://datadryad.org/api/v2/"
+    versions = requests.get(api_url + 'datasets/{}/versions'.format(doi_url))
+    version_id = versions.json()['_embedded']['stash:versions'][version_index]['_links']['self']['href'].split('/')[version_index]
+
+    # Get the URL to download one particular file
+    file = requests.get(api_url + 'versions/' + version_id + '/files').json()['_embedded']['stash:files'][file_index]
+    file_name = file['path']
+    download_url = 'https://datadryad.org' + file['_links']['stash:download']['href']
+
+    # Download in chunks (so that really big files can be downloaded)
+    chunk_size = 1024 * 1024 * 8
+    iters = file['size'] / chunk_size
+    with requests.get(download_url, stream=True) as r:
+        r.raise_for_status()
+        with open(location + file_name, 'wb') as f:
+            for i, chunk in enumerate(r.iter_content(chunk_size=chunk_size)): 
+                print('Downloading {}, {:.1f}%\r'.format(file_name, 100 * i / iters ), end='')
+                f.write(chunk)
+    print('Finished downloading')
+
+
+    loc = location + file_name[:-7] #remove .tar.gz
+    print('Extracting to  {}...'.format(loc))
+    file = tarfile.open(location + file_name)
+    file.extractall(loc)
+    file.close()
+    print('Cleaning up')
+    os.remove(location + file_name)
+    print('Complete')
+
+
 
 class BSCCM:
 
@@ -12,14 +64,13 @@ class BSCCM:
         data_root: path to the top-level BSCCM directory
         cache_index: load the full index into memory. Set to true for increased performance at the expense of memory usage
         """
-        
-        # TODO add sensing of trailing string
-        
-        print('Opening BSCCM (this may take a few seconds)...')
+        self.global_metadata = json.loads(open(data_root + 'BSCCM_global_metadata.json').read())  
+        print('Opening {}'.format(str(self)))
+        if data_root[-1] != os.sep:
+            data_root += os.sep
         self.data_root = data_root
         self.zarr_dataset = zarr.open(data_root + 'BSCCM_images.zarr', 'r')
         self.index_dataframe = pd.read_csv(data_root + 'BSCCM_index.csv', low_memory=not cache_index, index_col='global_index')
-        self.global_metadata = json.loads(open(data_root + 'BSCCM_global_metadata.json').read())
         self.size = len(self.index_dataframe)
         self.fluor_channel_names = self.global_metadata['fluorescence']['channel_names']
         self.led_array_channel_names = self.global_metadata['led_array']['channel_names']
@@ -141,6 +192,9 @@ class BSCCM:
         contrast_type: 'led_array', 'fluor', 'dpc', 'histology'
         percentile: 5, 10, 20, 40, 50 (median) 
         """
+        if 'MNIST' in str(self) or 'tiny' in str(self):
+            warnings.warn('Backgrounds not included in {}'.format(str(self)))
+        
         if percentile not in [5, 10, 20, 40, 50]:
             raise Exception('percentile must be one of: [5, 10, 20, 40, 50]')
         
