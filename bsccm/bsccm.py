@@ -107,7 +107,7 @@ class BSCCM:
             contrast_type = 'fluor'
         elif channel == 'histology':
             contrast_type = 'histology'
-        elif channel == 'dpc':
+        elif channel == 'dpc' or channel == 'DPC':
             contrast_type = 'dpc'
         else:
             raise Exception('unrecognized channel')
