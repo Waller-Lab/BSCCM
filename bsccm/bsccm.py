@@ -90,7 +90,7 @@ class BSCCM:
     def __repr__(self):
         return str(self)
         
-    def read_image(self, index, contrast_type, channel=None, copy=False, convert_histology_rgb32=True):
+    def read_image(self, index, channel, copy=False, convert_histology_rgb32=True):
         """
         
         TODO: add a note about how histology is translated on the fly to RGB32
@@ -99,6 +99,18 @@ class BSCCM:
         """
         if index not in self.index_dataframe.index:
             raise Exception('{} is not a valid index into this dataset. Try using .get_indices to find a valid index'.format(index))
+
+        # infer contrast type from channel
+        if channel in self.global_metadata['led_array']['channel_names']:
+            contrast_type = 'led_array'
+        elif channel in self.global_metadata['fluorescence']['channel_names']:
+            contrast_type = 'fluor'
+        elif channel == 'histology':
+            contrast_type = 'histology'
+        elif channel == 'dpc':
+            contrast_type = 'dpc'
+        else:
+            raise Exception('unrecognized channel')
 
         entry = self.index_dataframe.loc[index]
         base_path = entry['data_path'] + '/'
