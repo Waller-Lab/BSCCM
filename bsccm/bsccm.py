@@ -110,7 +110,7 @@ class BSCCM:
         elif channel == 'dpc' or channel == 'DPC':
             contrast_type = 'dpc'
         else:
-            raise Exception('unrecognized channel')
+            raise Exception('unrecognized channel: {}'.format(channel))
 
         entry = self.index_dataframe.loc[index]
         base_path = entry['data_path'] + '/'
