@@ -85,10 +85,18 @@ def get_led_angle(led_index):
     angle = np.arctan(np.sqrt(np.tan(angles_xy[:, 0])**2 + np.tan(angles_xy[:, 1])**2 ))
     return angle[led_index - 1] / (2*3.14) *360
 
-def plot_led_pattern(led_indices=None, channel_name=None, ax=None, legend=True, size=20):
+def plot_led_pattern(led_indices=None, channel_name=None, ax=None, legend=True, shorten_na_labels=False):
     """
     Make a plot of the the illumination pattern in NA space
     """
+    def normalize_marker_sizes(ax, marker_size):
+        bbox = ax.get_window_extent().transformed(ax.figure.dpi_scale_trans.inverted())
+        width, height = bbox.width, bbox.height
+        scaling_factor = (width * height)
+        return marker_size * scaling_factor
+    
+    size = normalize_marker_sizes(ax, 2.3)
+
     if channel_name is None and led_indices is None:
         raise Exception('Must supply either channel_name or led_indices')
     if channel_name is not None and led_indices is not None:
@@ -99,19 +107,21 @@ def plot_led_pattern(led_indices=None, channel_name=None, ax=None, legend=True, 
     if ax is None:
         ax = plt.gca()
     all_led_list = np.array([get_led_na_xy(led) for led in range(1, 582)])
-    ax.scatter(all_led_list[:,0], all_led_list[:,1], size, marker=',', color=[0.15,0.15,0.15], 
-                facecolor=None,edgecolor=None, edgecolors=None)
+    ax.scatter(all_led_list[:,0], all_led_list[:,1], size, marker='o', color=[0.15,0.15,0.15], 
+                facecolor=None,edgecolor=None, edgecolors=None, label='Off')
     ax.set_facecolor([0,0,0])
     
     for led_index in led_indices:
         nax, nay = get_led_na_xy(led_index) 
-        ax.scatter(nax, nay, size, marker='s', color=[0,1.0,0], 
-                    facecolor=None, edgecolor=None, edgecolors=None)
-    ax.add_patch(plt.Circle((0, 0), 0.5, alpha=0.25))
-    ax.set_xlabel('Numerical aperture (x)')
-    ax.set_ylabel('Numerical aperture (y)')
+        ax.scatter(nax, nay, size, marker='o', color=[0,1.0,0], 
+                    facecolor=None, edgecolor=None, edgecolors=None, label='On' if led_index == led_indices[0] else None)
+    ax.add_patch(plt.Circle((0, 0), 0.5, alpha=0.25, label='Brightfield LEDs'))
+    ax.set_xlabel('Numerical aperture (x)' if not shorten_na_labels else 'NA (x)')
+    ax.set_ylabel('Numerical aperture (y)' if not shorten_na_labels else 'NA (y)')
+    ax.set(xticks=[-1, 0, 1], yticks=[-1, 0, 1])
+    ax.set_aspect('equal')
     if legend:
-        plt.legend(['Brightfield LEDs','LED off','LED on'])
+        ax.legend()
 
 
 def illumination_to_led_indices(channel):
