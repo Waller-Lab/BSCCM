@@ -95,6 +95,9 @@ def plot_led_pattern(led_indices=None, channel_name=None, ax=None, legend=True, 
         scaling_factor = (width * height)
         return marker_size * scaling_factor
     
+    if ax is None:
+        ax = plt.gca()
+
     size = normalize_marker_sizes(ax, 2.3)
 
     if channel_name is None and led_indices is None:
@@ -104,8 +107,6 @@ def plot_led_pattern(led_indices=None, channel_name=None, ax=None, legend=True, 
     if channel_name is not None:
         led_indices = illumination_to_led_indices(channel_name)
 
-    if ax is None:
-        ax = plt.gca()
     all_led_list = np.array([get_led_na_xy(led) for led in range(1, 582)])
     ax.scatter(all_led_list[:,0], all_led_list[:,1], size, marker='o', color=[0.15,0.15,0.15], 
                 facecolor=None,edgecolor=None, edgecolors=None, label='Off')

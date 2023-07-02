@@ -401,7 +401,7 @@ class ScatterSelectorGating:
             
     def change_data(self, mask):
         #Change the underlying data
-        self.all_indices = self.dataframe.loc[np.flatnonzero(mask)].global_index.to_numpy()
+        self.all_indices = self.dataframe.loc[np.flatnonzero(mask)].index.to_numpy()
 
         self.update_all_plots()
 #         self.add_subplot(None)
@@ -475,6 +475,7 @@ class ScatterSelectorSubplot:
 
         num_subplots = len(self.main.fig.axes)
         for i in range(num_subplots):
+            print(self.main.fig.axes[i])
             self.main.fig.axes[i].change_geometry(num_subplots // self.main.num_cols + 1, self.main.num_cols, i + 1)
         if num_subplots == 0:
             self.facs_ax = self.main.fig.add_subplot(1,self.main.num_cols,1)
@@ -569,7 +570,8 @@ class ScatterSelectorSubplot:
             
         #Create new selector
         self.selector = PolygonSelector(self.facs_ax, onselect=self.onselect,
-                                       lineprops={'color':'g'})
+                                       )
+                                        # lineprops={'color':'g'})
 
 
         self.collection = self.facs_ax.scatter(x_data, y_data, 
