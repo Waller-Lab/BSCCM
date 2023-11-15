@@ -401,7 +401,7 @@ class ScatterSelectorGating:
             
     def change_data(self, mask):
         #Change the underlying data
-        self.all_indices = self.dataframe.loc[np.flatnonzero(mask)].global_index.to_numpy()
+        self.all_indices = self.dataframe.loc[np.flatnonzero(mask)].index.to_numpy()
 
         self.update_all_plots()
 #         self.add_subplot(None)
