@@ -107,7 +107,6 @@ class BSCCM:
 
     def __init__(self, data_root, cache_index=False):
         """
-        
         data_root: path to the top-level BSCCM directory
         cache_index: load the full index into memory. Set to true for increased performance at the expense of memory usage
         """
@@ -144,10 +143,18 @@ class BSCCM:
         
     def read_image(self, index, channel, copy=False, convert_histology_rgb32=True):
         """
-        
-        TODO: add a note about how histology is translated on the fly to RGB32
-        
-        contrast_type: 'led_array', 'fluor', 'dpc', 'histology'
+        Reads an image from the dataset.
+
+        Args:
+            index (int): The index of the image to read.
+            channel (str): The name of the channel to read the image from.
+            copy (bool, optional): If True, returns a copy of the image. Defaults to False.
+            convert_histology_rgb32 (bool, optional): If True and the image is a histology image, 
+                converts it to RGB32 format (compared to the raw histology images, which have
+                3 channels each with 10-bits per pixel). Defaults to True.
+
+        Returns:
+            numpy.ndarray: The image as a numpy array.
         """
         if index not in self.index_dataframe.index:
             raise Exception('{} is not a valid index into this dataset. Try using .get_indices to find a valid index'.format(index))
@@ -194,6 +201,21 @@ class BSCCM:
         
     def get_indices(self, batch=None, slide_replicate=None, antibodies=None, 
                     has_matched_histology=False, shuffle=False, seed=None):
+        """
+        Returns an array of indices corresponding to the rows in the index dataframe that match the specified criteria.
+
+        Args:
+            batch (int): the batch of experiments (either 0 or 1)
+            slide_replicate (int): The slide replicate number to filter by. Almost all are 0, but there are a few 1s.
+            antibodies (str or list of str): The antibody or antibodies to filter by.
+            has_matched_histology (bool): Whether to filter by rows that have matched histology cells.
+            shuffle (bool): Whether to shuffle the resulting indices.
+            seed (int): The random seed to use for shuffling. If None, the current system time is used.
+
+        Returns:
+            numpy.ndarray: An array of indices corresponding to the rows in the index dataframe that match the specified criteria.
+        """
+        
         sub_data_frame = self.index_dataframe
         if batch is not None:
             sub_data_frame = sub_data_frame[sub_data_frame.batch == batch]
@@ -215,6 +237,9 @@ class BSCCM:
         return indices
     
     def get_corrected_fluor(self, indices):
+        """
+        Return the shading-corrected fluorescence images for the given cell indices
+        """
         names = [
             'Fluor_690-_shading_corrected',   
             'Fluor_627-673_shading_corrected', 
@@ -226,6 +251,9 @@ class BSCCM:
         return self.surface_marker_dataframe.loc[indices][names].to_numpy()
     
     def get_surface_marker_data(self, indices):
+        """
+        Return the surface marker data (i.e.  demixed fluorescence spectra)
+        """
         four_spectra_model_names = [
            'CD123/HLA-DR/CD14_full_model_unmixed',
            'CD3/CD19/CD56_full_model_unmixed', 
