@@ -6,6 +6,53 @@ import json
 import warnings
 import requests
 import tarfile
+import io
+from tqdm import tqdm
+import shutil 
+
+
+
+class _ProgressFileObject(io.FileIO):
+    def __init__(self, path, *args, **kwargs):
+        self._total_size = os.path.getsize(path)
+        io.FileIO.__init__(self, path, *args, **kwargs)
+
+    def read(self, size):
+        print("Extracting: {:.2f}%\r".format(self.tell() / self._total_size * 100), end="")
+        return io.FileIO.read(self, size)
+
+
+def _combine_and_extract_chunks(chunk_dir, chunk_size=2**30):
+    # get the number of chunks in the directory
+    chunk_files = [f for f in os.listdir(chunk_dir) if f.endswith('.bin')]
+
+    # Combine chunks
+    total_chunks = len(chunk_files)
+    total_size = total_chunks * chunk_size
+
+    # get parent directory
+    parent_dir = os.path.dirname(chunk_dir.rstrip('/')) + os.sep
+    if not chunk_dir.endswith(os.sep):
+        chunk_dir += os.sep
+    
+    print('Combining {} chunks into {}'.format(total_chunks, parent_dir + 'combined.tar.gz'))
+    with tqdm(total=total_size, unit='B', unit_scale=True) as pbar:
+        with open(parent_dir + 'combined.tar.gz', 'wb') as out_file:
+            for i in range(total_chunks):
+                with open(chunk_dir + 'chunk{:05d}.bin'.format(i), 'rb') as in_file:
+                    shutil.copyfileobj(in_file, out_file)
+                    pbar.update(chunk_size)
+
+    # Unzip
+    extract_dir = chunk_dir.split('_chunks')[0]
+    os.mkdir(extract_dir)
+    tar = tarfile.open(fileobj=_ProgressFileObject(parent_dir + 'combined.tar.gz'))
+    tar.extractall(path=extract_dir)
+    tar.close()
+
+    # Delete chunks
+    print('Cleaning up')
+    shutil.rmtree(chunk_dir)
 
 
 def download_data(mnist=True, coherent=False, tiny=False):
@@ -64,6 +111,11 @@ class BSCCM:
         data_root: path to the top-level BSCCM directory
         cache_index: load the full index into memory. Set to true for increased performance at the expense of memory usage
         """
+        if data_root[-1] != os.sep:
+            data_root += os.sep
+        # check if data root exists
+        if not os.path.exists(data_root):
+            raise ValueError('Data root {} does not exist'.format(data_root))
         self.global_metadata = json.loads(open(data_root + 'BSCCM_global_metadata.json').read())  
         print('Opening {}'.format(str(self)))
         if data_root[-1] != os.sep:
@@ -107,10 +159,10 @@ class BSCCM:
             contrast_type = 'fluor'
         elif channel == 'histology':
             contrast_type = 'histology'
-        elif channel == 'dpc':
+        elif channel == 'dpc' or channel == 'DPC':
             contrast_type = 'dpc'
         else:
-            raise Exception(f'unrecognized channel {channel}')
+            raise Exception('unrecognized channel: {}'.format(channel))
 
         entry = self.index_dataframe.loc[index]
         base_path = entry['data_path'] + '/'
@@ -193,7 +245,10 @@ class BSCCM:
                           ]
         
         four_spectra_data = self.surface_marker_dataframe.loc[indices][four_spectra_model_names].to_numpy()
-        two_spectra_data = self.surface_marker_dataframe.loc[indices][two_spectra_model_names].to_numpy()
+        if two_spectra_model_names[0] in self.surface_marker_dataframe.columns:
+            two_spectra_data = self.surface_marker_dataframe.loc[indices][two_spectra_model_names].to_numpy()
+        else:
+            two_spectra_data = None
         return two_spectra_model_names, two_spectra_data, four_spectra_model_names, four_spectra_data
     
     def get_background(self, index, channel='Brightfield', percentile=50, dim=128):
@@ -215,5 +270,48 @@ class BSCCM:
         x, y = self.index_dataframe.loc[index].position_in_fov_x_pix, self.index_dataframe.loc[index].position_in_fov_y_pix
         cropped = image[..., int(y) - dim // 2: int(y) + dim // 2, int(x) - dim // 2: int(x) + dim // 2]
         return cropped
+    
+    def get_cell_type_classification_data(self, ten_class_version=False):
+        """
+        Get the data needed for doing cell type classification.
+        This function returns the global indices of the cells, and an integer cell type label for each cell.
+        By default, there are three classes: Lymphocytes (0), Granulocytes (1), and Monocytes (2).
+        If the ten_class_version flag is set to True, then there are subcategories of each of these classes,
+        as well as two additional classes: Red blood cells and Unknown
+            Lymphocytes: 0
+            Monocytes: 7 8 9
+            Granulocytes: 1 2 3
+            RBCs: 4
+            Unknown: 5 6 
+        
+        These classification labels exist only for Batch 0, antibody condition "all"
+        """
+        marked_names = [name for name in self.surface_marker_dataframe.columns if 'selection_gated' in name]
+        cluster_indices = {}
+        for i, col in enumerate(marked_names):
+            # Get the indices of the rows which are True for the current population
+            indices = self.surface_marker_dataframe[self.surface_marker_dataframe[col]].index.tolist()
+            # Store the indices in the dictionary using the population's integer key
+            cluster_indices[i] = indices
+
+        global_indices = np.concatenate(list(cluster_indices.values()))
+        cluster_labels = np.concatenate([np.ones(len(indices)) * i for i, indices in cluster_indices.items()])
+        if ten_class_version:
+            return global_indices, cluster_labels
+        else:
+            # put them into the coarser categories of lymphocytes, monocytes, and granulocytes
+            new_labels = []
+            for label in cluster_labels:
+                if label == 0:
+                    new_labels.append(0)
+                elif label in [1, 2, 3]:
+                    new_labels.append(1)
+                elif label in [7, 8, 9]:
+                    new_labels.append(2)
+                else:
+                    new_labels.append(-1)
+            new_labels = np.array(new_labels)
+            mask = new_labels != -1
+            return global_indices[mask], new_labels[mask]
     
     

@@ -27,7 +27,8 @@ setuptools.setup(
         "numpy",
         "pandas",
         "zarr",
-        "requests"
+        "requests", 
+        "tqdm"
     ],
     python_requires=">=3.6",
     classifiers=[
