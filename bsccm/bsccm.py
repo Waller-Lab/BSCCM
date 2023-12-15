@@ -9,99 +9,143 @@ import tarfile
 import io
 from tqdm import tqdm
 import shutil 
+import requests
 
 
 
-class _ProgressFileObject(io.FileIO):
-    def __init__(self, path, *args, **kwargs):
-        self._total_size = os.path.getsize(path)
-        io.FileIO.__init__(self, path, *args, **kwargs)
-
-    def read(self, size):
-        print("Extracting: {:.2f}%\r".format(self.tell() / self._total_size * 100), end="")
-        return io.FileIO.read(self, size)
-
-
-def _combine_and_extract_chunks(chunk_dir, chunk_size=2**30):
-    # get the number of chunks in the directory
-    chunk_files = [f for f in os.listdir(chunk_dir) if f.endswith('.bin')]
-
-    # Combine chunks
-    total_chunks = len(chunk_files)
-    total_size = total_chunks * chunk_size
-
-    # get parent directory
-    parent_dir = os.path.dirname(chunk_dir.rstrip('/')) + os.sep
-    if not chunk_dir.endswith(os.sep):
-        chunk_dir += os.sep
-    
-    print('Combining {} chunks into {}'.format(total_chunks, parent_dir + 'combined.tar.gz'))
-    with tqdm(total=total_size, unit='B', unit_scale=True) as pbar:
-        with open(parent_dir + 'combined.tar.gz', 'wb') as out_file:
-            for i in range(total_chunks):
-                with open(chunk_dir + 'chunk{:05d}.bin'.format(i), 'rb') as in_file:
-                    shutil.copyfileobj(in_file, out_file)
-                    pbar.update(chunk_size)
-
-    # Unzip
-    extract_dir = chunk_dir.split('_chunks')[0]
-    os.mkdir(extract_dir)
-    tar = tarfile.open(fileobj=_ProgressFileObject(parent_dir + 'combined.tar.gz'))
-    tar.extractall(path=extract_dir)
-    tar.close()
-
-    # Delete chunks
-    print('Cleaning up')
-    shutil.rmtree(chunk_dir)
-
-
-def download_data(mnist=True, coherent=False, tiny=False):
+def download_dataset(location='.', coherent=False, tiny=True, mnist=False, token=None):
     """
-    Download one of the 6 possible versions of BSCCM dataset
-    
-    mnist: download BSCCMNIST (downsized and downsampled version of BSCCM)
-    coherent: download BSCCM-coherent or BSCCM-coherent-tiny
-    tiny: the tiny version or the full version
+    Downloads the BSCCM dataset to the specified location.
+    If location is not specified, the current directory is used.
+
+    Args:
+        location (str): The location to download the dataset to.
+        coherent (bool): Whether to download the coherent (single LED illumination patterns) version of the dataset.
+        tiny (bool): Whether to download the tiny version of the dataset, a subsample of the full dataset.
+        MNIST (bool): Whether to download the version of the dataset with MNIST sized images
+        token: (Debugging only) for accessing versions of the dataset not yet released on Dryad.
+
+    Returns:
+        The path to the downloaded dataset.
     """
 
+    # add trailing slash if not there
+    if location[-1] != os.sep:
+        location += os.sep
 
-    location = '/home/hpinkard_waller/2tb_ssd/'
-    doi_url = 'doi%3A10.5061%2Fdryad.9pg8d'
-    version_index = -1
-    file_index = 1
-
-    # Get the version ID of the dataset
-    api_url = "https://datadryad.org/api/v2/"
-    versions = requests.get(api_url + 'datasets/{}/versions'.format(doi_url))
-    version_id = versions.json()['_embedded']['stash:versions'][version_index]['_links']['self']['href'].split('/')[version_index]
-
-    # Get the URL to download one particular file
-    file = requests.get(api_url + 'versions/' + version_id + '/files').json()['_embedded']['stash:files'][file_index]
-    file_name = file['path']
-    download_url = 'https://datadryad.org' + file['_links']['stash:download']['href']
-
-    # Download in chunks (so that really big files can be downloaded)
-    chunk_size = 1024 * 1024 * 8
-    iters = file['size'] / chunk_size
-    with requests.get(download_url, stream=True) as r:
-        r.raise_for_status()
-        with open(location + file_name, 'wb') as f:
-            for i, chunk in enumerate(r.iter_content(chunk_size=chunk_size)): 
-                print('Downloading {}, {:.1f}%\r'.format(file_name, 100 * i / iters ), end='')
-                f.write(chunk)
-    print('Finished downloading')
+    dataset_name = 'BSCCM' if not mnist else 'BSCCMNIST'
+    if coherent:
+        dataset_name += '-coherent'
+    if tiny:
+        dataset_name += '-tiny'
+    dataset_name += '.tar.gz'
 
 
-    loc = location + file_name[:-7] #remove .tar.gz
-    print('Extracting to  {}...'.format(loc))
-    file = tarfile.open(location + file_name)
-    file.extractall(loc)
-    file.close()
+    doi = 'doi%3A10.5061%2Fdryad.sxksn038s'
+    base_url = "https://datadryad.org"
+
+    # Set up the headers
+    headers = { "Authorization": f"Bearer {token}"} if token is not None else None
+
+    versions = requests.get(base_url + f'/api/v2/datasets/{doi}/versions', headers=headers)
+    version_id = versions.json()['_embedded']['stash:versions'][-1]['_links']['self']['href'].split('/')[-1]
+
+    # Function to get all files, handling pagination
+    def get_all_files(version_id):
+        all_files = []
+        url = base_url + '/api/v2/versions/' + version_id + '/files'
+        while url:
+            print(f'Fetching file metadata {len(all_files)}...', end='\r')
+            response = requests.get(url, headers=headers)
+
+            # Check if the response status code indicates success
+            if response.status_code != 200:
+                print(f"Failed to fetch data: {response.status_code}")
+                break
+
+            # Try to decode JSON only if the response contains content
+            if response.content:
+                data = response.json()
+                all_files.extend(data['_embedded']['stash:files'])
+                links = data.get('_links', {})
+                next_link = links.get('next', {}).get('href')
+
+                if next_link:
+                    if next_link.startswith('/'):
+                        url = base_url + next_link
+                    else:
+                        url = next_link
+                else:
+                    url = None
+            else:
+                print("No content in response")
+                break
+
+        return all_files
+
+    files = get_all_files(version_id)
+
+    # find files relevant to this dataset
+    files = [f for f in files if dataset_name in f['path']]
+
+
+
+    download_chunk_size = 1024 * 1024 * 8  # 8 MB
+    total_size = sum(f['size'] for f in files)
+
+    # Create a tqdm progress bar for the total download progress
+    print(f'Downloading...')
+    with tqdm(total=total_size, desc='Total Download Progress', unit='B', unit_scale=True, unit_divisor=1024) as progress_bar:
+        for k, file_info in enumerate(files):
+
+            download_url = 'https://datadryad.org' + file_info['_links']['stash:file-download']['href']
+            with requests.get(download_url, stream=True, headers=headers) as r:
+                r.raise_for_status()
+                with open(location + file_info['path'], 'wb') as file:
+                    for chunk in r.iter_content(chunk_size=download_chunk_size):
+                        if chunk:  # filter out keep-alive new chunks
+                            file.write(chunk)
+                            # Update the progress bar by the size of the chunk
+                            progress_bar.update(len(chunk))
+
+
+    # get all file names
+    chunks = [f['path'] for f in files]
+    # organize alphabetically
+    chunks.sort()
+
+    # Recombine the chunks into a single file
+    combined_file_name = chunks[0].split('_chunk')[0]
+    with open(location + combined_file_name, 'wb') as combined_file:
+        for chunk in tqdm(chunks, desc='Combining File chunks'):
+            with open(location + chunk, 'rb') as file_part:
+                combined_file.write(file_part.read())
+
+    # Extract the tar.gz file
+    with tarfile.open(location + combined_file_name) as file:
+    # Create a tqdm progress bar without a total
+        members = []
+        with tqdm(desc='Reading compressed files', unit=' files') as progress_bar:
+            # Iterate over each member
+            for member in file:
+                members.append(member)
+                # Update the progress bar for each member
+                progress_bar.update(1)
+
+    # Now extract the files
+    loc = location + combined_file_name[:-7]  # Remove .tar.gz for the extraction location
+    print('Decompressing to {}...'.format(loc))
+    with tarfile.open(location + combined_file_name) as file:
+        for member in tqdm(members, desc='Extracting Files', unit='file'):
+            file.extract(member, loc)
+
     print('Cleaning up')
-    os.remove(location + file_name)
+    os.remove(location + combined_file_name)
+    for chunk in chunks:
+        os.remove(location + chunk)
     print('Complete')
 
-
+    return loc
 
 class BSCCM:
 
@@ -156,6 +200,7 @@ class BSCCM:
         Returns:
             numpy.ndarray: The image as a numpy array.
         """
+        index = int(index)
         if index not in self.index_dataframe.index:
             raise Exception('{} is not a valid index into this dataset. Try using .get_indices to find a valid index'.format(index))
 

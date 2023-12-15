@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
+<!-- </head> -->
+
 <!-- Global site tag (gtag.js) - Google Analytics -->
 <!-- put google analytics script here -->
 
@@ -16,6 +19,45 @@
   	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
 	<link href="styles/minimal.css" rel="stylesheet">
+
+
+		<!-- thiis is for styling the BSCCM table -->
+  <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 3px solid black;
+            padding: 8px;
+            text-align: center; /* Horizontally center text */
+            vertical-align: middle; /* Vertically center text */
+        }
+
+        th {
+            vertical-align: bottom; /* Aligns text to the bottom of the cell for the header row */
+            border-top: none; /* Removes the top border for the header row */
+         
+            border-left: none; /* Remove left border */
+        		border-right: none; /* Remove right border */
+        }
+        .blue {
+            color: blue;
+        }
+        .magenta {
+            color: magenta;
+        }
+        .oliveGreen {
+            color: olive;
+        }
+
+                img {
+            max-width: 100%; /* Ensure the image is not wider than its container */
+            height: auto; /* Maintain the aspect ratio of the image */
+            display: block; /* Remove default alignment */
+            margin: 0 auto; /* Center the image */
+        }
+    </style>
 </head>
 
 <body>
@@ -37,15 +79,20 @@
 <div class="container">
 
 	<div class="row">
-		<h1><b>Example Project Page</b></h1>
+		<h2><b>The Berkeley Single Cell Computational Microscopy (BSCCM) Dataset</b></h2>
 		<h5><b><a href="https://henrypinkard.github.io/">Henry Pinkard</a>, Cherry Liu, Fanice Nyatigo, Daniel A. Fletcher, and <a href="http://www.laurawaller.com/">Laura Waller</a></b></h5>
 		<br />
-		<img class="center" src="resources/overview.jpg" style="width:700px">
+		<!-- <img class="center" src="resources/overview.jpg" style="width:700px"> -->
+        <video autoplay loop muted>
+        <source src="resources/cell_montage_animation_zoom_out_meta.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+         </video>
+
 	</div>
 
 	<div class="row">
 		<h3><b>Abstract</b></h3>
-		<p>Computational microscopy, in which hardware and algorithms of an imaging system are jointly designed, shows promise for making imaging systems that cost less, perform more robustly, and collect new types of information. Often, the performance of computational imaging systems, especially those that incorporate machine learning, is sample-dependent. Thus, standardized datasets are an essential tool for comparing the performance of different approaches. Here, we introduce the Berkeley Single Cell Computational Microscopy (BSCCM) dataset, which contains over 400,000 images of individual white blood cells. The dataset contains images captured with multiple illumination patterns on an LED array microscope and fluorescent measurements of the abundance of surface proteins that mark different cell types. We hope this dataset will provide a valuable resource for the development and testing of new algorithms in computational microscopy and computer vision with practical biomedical applications. </p>
+		<p>Computational microscopy, in which hardware and algorithms of an imaging system are jointly designed, shows promise for making imaging systems that cost less, perform more robustly, and collect new types of information. Often, the performance of computational imaging systems, especially those that incorporate machine learning, is sample-dependent. Thus, standardized datasets are an essential tool for comparing the performance of different approaches. Here, we introduce the Berkeley Single Cell Computational Microscopy (BSCCM) dataset, which contains ~12,000,000 images of 400,000 individual white blood cells. The dataset contains images captured with multiple illumination patterns on an LED array microscope and fluorescent measurements of the abundance of surface proteins that mark different cell types. We hope this dataset will provide a valuable resource for the development and testing of new algorithms in computational microscopy and computer vision with practical biomedical applications. </p>
 		</div>
 
 <!--
@@ -67,15 +114,95 @@ src="https://www.youtube.com/embed/ReH0x_W3glM">
 
 <!--src="https://youtube.com/embed/yfDLuPDd7c4">-->
 
+
 	<div class="row">
 		<h3><b>Resources</b></h3>
 		<ul>
-			<li><b><a href="https://github.com/Waller-Lab/BSCCM"> Code:</a></b></li>
+			(<b><a href="https://github.com/Waller-Lab/BSCCM"> Code</a></b>)
+			(<b><a href="https://github.com/Waller-Lab/BSCCM"> TODO Paper Dont forget to link at the top also</a></b>)
+			(<b><a href="https://github.com/Waller-Lab/BSCCM"> TODO How to use</a></b>)
 			<!-- <li>TODO Paper link: <b><a href="https://arxiv.org/">here</a></b></li> -->
 			<!-- <li>Other useful links: <b><a href="https://github.com/Waller-Lab/">code</a></b> </li> -->
 			<!-- <li><b><a href="gallery.html">Gallery</a></b> of reconstructions</li>-->
 		</ul>
 	</div>
+
+
+
+	<div class="row">
+				<h3><b>Overview</b></h3>
+
+		<figure>
+    <img src="fig1.png" alt="Figure 1">
+    <figcaption><b>Berkeley Single Cell Computational Microscopy (BSCCM) dataset overview. a)</b> Schematic of the microscope used in data collection: a com- mercial body fluorescence microscope with its trans-illumination lamp replaced with a programmable LED array quasi-dome. <b>b)</b> The LED array was used for label-free imaging of cells with different illumination patterns. <b>c)</b>  The fluorescence light path was used capture 6-channel fluorescence images on the same cells. <b>d)</b> This provided both protein expression levels and label-free images on the same cells.</figcaption>
+</figure>
+</div>
+
+
+
+	<div class="row">
+		<figure>
+    <img src="fig2.png" alt="Figure 1">
+    <figcaption><b>LED array and histology contrasts in BSCCM and BSCCM- coherent</b> </figcaption>
+</figure>
+</div>
+
+
+<div class="row">
+  <h3><b>BSCCM variants</b></h3>
+    
+
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Size (GB)</th>
+            <th># Cells</th>
+            <th>Image Specifications<br><span class="blue">LED-array/Fluor</span><br><span class="magenta">Histology</span></th>
+        </tr>
+        <tr>
+            <td><b>BSCCM</b></td>
+            <td>228</td>
+            <td>412,941</td>
+            <td><span class="blue">128×128 12-bit</span><br><span class="magenta">398×398 36-bit</span></td>
+        </tr>
+        <tr>
+            <td><b>BSCC<span class="oliveGreen">MNIST</span></b></td>
+            <td>58</td>
+            <td>412,941</td>
+            <td><span class="blue">28×28 8-bit</span><br><span class="magenta">28×28 24-bit</span></td>
+        </tr>
+        <tr>
+            <td><b>BSCCM-coherent</b></td>
+            <td>30</td>
+            <td>4,304</td>
+            <td><span class="blue">128×128 12-bit</span></td>
+        </tr>
+        <tr>
+            <td><b>BSCCM-tiny</b></td>
+            <td>0.6</td>
+            <td>1,000</td>
+            <td><span class="blue">128×128 12-bit</span><br><span class="magenta">398×398 36-bit</span></td>
+        </tr>
+        <tr>
+            <td><b>BSCC<span class="oliveGreen">MNIST</span>-tiny</b></td>
+            <td>0.2</td>
+            <td>1,000</td>
+            <td><span class="blue">28×28 8-bit</span><br><span class="magenta">28×28 24-bit</span></td>
+        </tr>
+        <tr>
+            <td><b>BSCCM-coherent-tiny</b></td>
+            <td>0.6</td>
+            <td>100</td>
+            <td><span class="blue">128×128 12-bit</span></td>
+        </tr>
+    </table>
+
+
+
+</div>
+
+
+
 
 
 
