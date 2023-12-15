@@ -5,3 +5,5 @@ See the [project website](https://waller-lab.github.io/BSCCM/) for more informat
 For using the `bsccm` python package for using the dataset, see the [Getting Started Jupyter notebook](https://github.com/Waller-Lab/BSCCM/blob/main/Getting_started.ipynb).
 
 Raw data is hosted [here](https://doi.org/10.5061/dryad.sxksn038s), but it is easiest to download using the python package as shown in the notebook
+
+Manuscript forthcoming...
