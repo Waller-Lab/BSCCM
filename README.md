@@ -1,3 +1,4 @@
+[![DOI](https://zenodo.org/badge/331695371.svg)](https://zenodo.org/doi/10.5281/zenodo.10392182)
 # Berkeley Single Cell Computational Microscopy Dataset
 
 See the [project website](https://waller-lab.github.io/BSCCM/) for more information.
