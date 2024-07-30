@@ -98,7 +98,7 @@ def download_dataset(location='.', coherent=False, tiny=True, mnist=False, token
     with tqdm(total=total_size, desc='Total Download Progress', unit='B', unit_scale=True, unit_divisor=1024) as progress_bar:
         for k, file_info in enumerate(files):
 
-            download_url = 'https://datadryad.org' + file_info['_links']['stash:file-download']['href']
+            download_url = 'https://datadryad.org' + file_info['_links']['stash:download']['href']
             with requests.get(download_url, stream=True, headers=headers) as r:
                 r.raise_for_status()
                 with open(location + file_info['path'], 'wb') as file:
