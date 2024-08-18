@@ -23,6 +23,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/henrypinkard/BSCCM",
     packages=setuptools.find_packages(),
+    package_data={"bsccm": ["*.json"]},
     install_requires=[
         "numpy",
         "pandas",
