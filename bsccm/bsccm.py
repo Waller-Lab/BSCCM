@@ -88,15 +88,30 @@ def download_dataset(location='.', coherent=False, tiny=True, mnist=False, token
     # find files relevant to this dataset
     files = [f for f in files if dataset_name in f['path']]
 
-
+    # Filter out files that already exist with the correct size
+    files_to_download = []
+    skipped_size = 0
+    for file_info in files:
+        file_path = location + file_info['path']
+        if os.path.exists(file_path) and os.path.getsize(file_path) == file_info['size']:
+            print(f"Skipping {file_info['path']} - already exists with same size")
+            skipped_size += file_info['size']
+        else:
+            files_to_download.append(file_info)
 
     download_chunk_size = 1024 * 1024 * 8  # 8 MB
     total_size = sum(f['size'] for f in files)
 
+    # Adjust total size to reflect only files that need downloading
+    actual_download_size = total_size - skipped_size
+    print(f'Files to download: {len(files_to_download)} of {len(files)}')
+
     # Create a tqdm progress bar for the total download progress
     print(f'Downloading...')
-    with tqdm(total=total_size, desc='Total Download Progress', unit='B', unit_scale=True, unit_divisor=1024) as progress_bar:
-        for k, file_info in enumerate(files):
+    with tqdm(total=actual_download_size, desc='Total Download Progress', unit='B', unit_scale=True, unit_divisor=1024) as progress_bar:
+        for k, file_info in enumerate(files_to_download):
+            # Make sure directory exists
+            os.makedirs(os.path.dirname(location + file_info['path']), exist_ok=True)
 
             download_url = 'https://datadryad.org' + file_info['_links']['stash:download']['href']
             with requests.get(download_url, stream=True, headers=headers) as r:
