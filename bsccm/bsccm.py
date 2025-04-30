@@ -147,6 +147,9 @@ def download_dataset(location='.', coherent=False, tiny=True, mnist=False, token
                 # Update the progress bar for each member
                 progress_bar.update(1)
 
+    for chunk in tqdm(chunks, desc='deleting temporary files'):
+        os.remove(location + chunk)
+
     # Now extract the files
     loc = location + combined_file_name[:-7]  # Remove .tar.gz for the extraction location
     print('Decompressing to {}...'.format(loc))
@@ -156,8 +159,7 @@ def download_dataset(location='.', coherent=False, tiny=True, mnist=False, token
 
     print('Cleaning up')
     os.remove(location + combined_file_name)
-    for chunk in chunks:
-        os.remove(location + chunk)
+
     print('Complete')
 
     return loc
