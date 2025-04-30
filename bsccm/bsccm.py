@@ -136,6 +136,9 @@ def download_dataset(location='.', coherent=False, tiny=True, mnist=False, token
             with open(location + chunk, 'rb') as file_part:
                 combined_file.write(file_part.read())
 
+    for chunk in tqdm(chunks, desc='deleting temporary files'):
+        os.remove(location + chunk)
+
     # Extract the tar.gz file
     with tarfile.open(location + combined_file_name) as file:
     # Create a tqdm progress bar without a total
@@ -146,9 +149,6 @@ def download_dataset(location='.', coherent=False, tiny=True, mnist=False, token
                 members.append(member)
                 # Update the progress bar for each member
                 progress_bar.update(1)
-
-    for chunk in tqdm(chunks, desc='deleting temporary files'):
-        os.remove(location + chunk)
 
     # Now extract the files
     loc = location + combined_file_name[:-7]  # Remove .tar.gz for the extraction location
