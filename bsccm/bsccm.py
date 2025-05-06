@@ -10,6 +10,7 @@ import io
 from tqdm import tqdm
 import shutil 
 import requests
+from pathlib import Path
 
 
 
@@ -151,18 +152,17 @@ def download_dataset(location='.', coherent=False, tiny=True, mnist=False, token
                 progress_bar.update(1)
 
     # Now extract the files
-    loc = location + combined_file_name[:-7]  # Remove .tar.gz for the extraction location
-    print('Decompressing to {}...'.format(loc))
+    print('Decompressing to {}...'.format(location))
     with tarfile.open(location + combined_file_name) as file:
         for member in tqdm(members, desc='Extracting Files', unit='file'):
-            file.extract(member, loc)
+            file.extract(member, location)
 
     print('Cleaning up')
     os.remove(location + combined_file_name)
 
     print('Complete')
 
-    return loc
+    return str(Path(location).resolve()) + os.sep + combined_file_name[:-7] # name of the dataset (minus .tar.gz)
 
 class BSCCM:
 
