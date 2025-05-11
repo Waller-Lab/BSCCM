@@ -1,0 +1,290 @@
+{
+  "@context": {
+    "@language": "en",
+    "@vocab": "https://schema.org/",
+    "sc": "https://schema.org/",
+    "cr": "http://mlcommons.org/croissant/",
+    "rai": "http://mlcommons.org/croissant/RAI/",
+    "dct": "http://purl.org/dc/terms/",
+    "citeAs": "cr:citeAs",
+    "column": "cr:column",
+    "conformsTo": "dct:conformsTo",
+    "data": {
+      "@id": "cr:data",
+      "@type": "@json"
+    },
+    "dataType": {
+      "@id": "cr:dataType",
+      "@type": "@vocab"
+    },
+    "examples": {
+      "@id": "cr:examples",
+      "@type": "@json"
+    },
+    "extract": "cr:extract",
+    "field": "cr:field",
+    "fileProperty": "cr:fileProperty",
+    "fileObject": "cr:fileObject",
+    "fileSet": "cr:fileSet",
+    "format": "cr:format",
+    "includes": "cr:includes",
+    "isLiveDataset": "cr:isLiveDataset",
+    "jsonPath": "cr:jsonPath",
+    "key": "cr:key",
+    "md5": "cr:md5",
+    "parentField": "cr:parentField",
+    "path": "cr:path",
+    "recordSet": "cr:recordSet",
+    "references": "cr:references",
+    "regex": "cr:regex",
+    "repeated": "cr:repeated",
+    "replace": "cr:replace",
+    "separator": "cr:separator",
+    "source": "cr:source",
+    "subField": "cr:subField",
+    "transform": "cr:transform"
+  },
+  "citeAs": "Pinkard, H., et al. (2024). The Berkeley Single Cell Computational Microscopy (BSCCM) Dataset. arXiv:2402.06191",
+  "@type": "Dataset",
+  "name": "bsccm",
+  "description": "Berkeley Single Cell Computational Microscopy Dataset containing images of white blood cells",
+  "url": "https://doi.org/10.5061/dryad.sxksn038s",
+  "license": "https://creativecommons.org/licenses/by/4.0/deed.en",
+  "creator": {
+    "@type": "Organization",
+    "name": "Waller Lab, UC Berkeley"
+  },
+  "datePublished": "2024-02-08",
+  "version": "1.0.0",
+  "dct:conformsTo": "http://mlcommons.org/croissant/1.0",
+
+  "distribution": [
+    {
+      "@type": "cr:FileObject",
+      "@id": "BSCCM_global_metadata",
+      "name": "BSCCM Global Metadata",
+      "contentUrl": "BSCCM/BSCCM_global_metadata.json",
+      "encodingFormat": "application/json",
+      "sha256": "127287671735d51dafb517bd1eb9c2267eeaca2f58934c72b04a4223c837a713"
+    },
+    {
+      "@type": "cr:FileSet",
+      "@id": "BSCCM_zarr_directory",
+      "name": "BSCCM Images Zarr Directory",
+      "contentUrl": "BSCCM/BSCCM_images.zarr",
+      "encodingFormat": "application/zarr",
+      "includes": "**/*"
+    },
+    {
+      "@type": "cr:FileSet",
+      "@id": "BSCCM_backgrounds_zarr",
+      "name": "BSCCM Backgrounds Zarr Directory",
+      "contentUrl": "BSCCM/BSCCM_backgrounds.zarr",
+      "encodingFormat": "application/zarr",
+      "includes": "**/*"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "BSCCM_index_csv",
+      "name": "BSCCM Index",
+      "contentUrl": "BSCCM/BSCCM_index.csv",
+      "encodingFormat": "text/csv",
+      "sha256": "e66631f4ab9b9cfad6ebbb0aa2549657bbfd205b4697bb6fe510cb54356d10c1"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "BSCCM_surface_markers_csv",
+      "name": "BSCCM Surface Markers",
+      "contentUrl": "BSCCM/BSCCM_surface_markers.csv",
+      "encodingFormat": "text/csv",
+      "sha256": "6d6cdab84dd9605f2d6e9756563b65a8c7a68bb54b187a9c946b2856f08b746a"
+    },
+    
+    {
+      "@type": "cr:FileObject",
+      "@id": "BSCCM_tiny_global_metadata",
+      "name": "BSCCM-tiny Global Metadata",
+      "contentUrl": "BSCCM-tiny/BSCCM_global_metadata.json",
+      "encodingFormat": "application/json",
+      "sha256": "127287671735d51dafb517bd1eb9c2267eeaca2f58934c72b04a4223c837a713"
+    },
+    {
+      "@type": "cr:FileSet",
+      "@id": "BSCCM_tiny_zarr_directory",
+      "name": "BSCCM-tiny Images Zarr Directory",
+      "contentUrl": "BSCCM-tiny/BSCCM_images.zarr",
+      "encodingFormat": "application/zarr",
+      "includes": "**/*"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "BSCCM_tiny_index_csv",
+      "name": "BSCCM-tiny Index",
+      "contentUrl": "BSCCM-tiny/BSCCM_index.csv",
+      "encodingFormat": "text/csv",
+      "sha256": "b2a1026e6b9fd873f5706c31079d80bcb93475d1cbce9177ee461cd29bb8c7f7"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "BSCCM_tiny_surface_markers_csv",
+      "name": "BSCCM-tiny Surface Markers",
+      "contentUrl": "BSCCM-tiny/BSCCM_surface_markers.csv",
+      "encodingFormat": "text/csv",
+      "sha256": "259c31de6db23c97d25ebb4377a29934db193537dcd4a6de38b33caee382284f"
+    },
+    
+    {
+      "@type": "cr:FileObject",
+      "@id": "BSCCMNIST_global_metadata",
+      "name": "BSCCMNIST Global Metadata",
+      "contentUrl": "BSCCMNIST/BSCCM_global_metadata.json",
+      "encodingFormat": "application/json",
+      "sha256": "882953648346a46767d3c25b7e2802076163c3a59e57446d85a9bb2daa7b0e53"
+    },
+    {
+      "@type": "cr:FileSet",
+      "@id": "BSCCMNIST_zarr_directory",
+      "name": "BSCCMNIST Images Zarr Directory",
+      "contentUrl": "BSCCMNIST/BSCCM_images.zarr",
+      "encodingFormat": "application/zarr",
+      "includes": "**/*"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "BSCCMNIST_index_csv",
+      "name": "BSCCMNIST Index",
+      "contentUrl": "BSCCMNIST/BSCCM_index.csv",
+      "encodingFormat": "text/csv",
+      "sha256": "e66631f4ab9b9cfad6ebbb0aa2549657bbfd205b4697bb6fe510cb54356d10c1"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "BSCCMNIST_surface_markers_csv",
+      "name": "BSCCMNIST Surface Markers",
+      "contentUrl": "BSCCMNIST/BSCCM_surface_markers.csv",
+      "encodingFormat": "text/csv",
+      "sha256": "889f69e18343f98e113ceab214c4a86897e765faefee97a177846f59028193c3"
+    },
+    
+    {
+      "@type": "cr:FileObject",
+      "@id": "BSCCMNIST_tiny_global_metadata",
+      "name": "BSCCMNIST-tiny Global Metadata",
+      "contentUrl": "BSCCMNIST-tiny/BSCCM_global_metadata.json",
+      "encodingFormat": "application/json",
+      "sha256": "882953648346a46767d3c25b7e2802076163c3a59e57446d85a9bb2daa7b0e53"
+    },
+    {
+      "@type": "cr:FileSet",
+      "@id": "BSCCMNIST_tiny_zarr_directory",
+      "name": "BSCCMNIST-tiny Images Zarr Directory",
+      "contentUrl": "BSCCMNIST-tiny/BSCCM_images.zarr",
+      "encodingFormat": "application/zarr",
+      "includes": "**/*"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "BSCCMNIST_tiny_index_csv",
+      "name": "BSCCMNIST-tiny Index",
+      "contentUrl": "BSCCMNIST-tiny/BSCCM_index.csv",
+      "encodingFormat": "text/csv",
+      "sha256": "157211c21662f52b7651f403257edfb2654ec2c987b1a202bfd5687709e35e2c"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "BSCCMNIST_tiny_surface_markers_csv",
+      "name": "BSCCMNIST-tiny Surface Markers",
+      "contentUrl": "BSCCMNIST-tiny/BSCCM_surface_markers.csv",
+      "encodingFormat": "text/csv",
+      "sha256": "ee946a8f249b8d950ca3180a9a29d4d54380964b2ba614c736442c6533ac70c4"
+    },
+    
+    {
+      "@type": "cr:FileObject",
+      "@id": "BSCCM_coherent_global_metadata",
+      "name": "BSCCM-coherent Global Metadata",
+      "contentUrl": "BSCCM-coherent/BSCCM_global_metadata.json",
+      "encodingFormat": "application/json",
+      "sha256": "e9a89f153170d7adaac6b2ac1e74dfb763409c6c85ea5e31aec6eb0e847c5fd4"
+    },
+    {
+      "@type": "cr:FileSet",
+      "@id": "BSCCM_coherent_zarr_directory",
+      "name": "BSCCM-coherent Images Zarr Directory",
+      "contentUrl": "BSCCM-coherent/BSCCM_images.zarr",
+      "encodingFormat": "application/zarr",
+      "includes": "**/*"
+    },
+    {
+      "@type": "cr:FileSet",
+      "@id": "BSCCM_coherent_backgrounds_zarr",
+      "name": "BSCCM-coherent Backgrounds Zarr Directory",
+      "contentUrl": "BSCCM-coherent/BSCCM_backgrounds.zarr",
+      "encodingFormat": "application/zarr",
+      "includes": "**/*"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "BSCCM_coherent_index_csv",
+      "name": "BSCCM-coherent Index",
+      "contentUrl": "BSCCM-coherent/BSCCM_index.csv",
+      "encodingFormat": "text/csv",
+      "sha256": "476252fce1691b033c5d215d0d403f912755ac60e1a417c7e2a17b3bfb376eb5"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "BSCCM_coherent_surface_markers_csv",
+      "name": "BSCCM-coherent Surface Markers",
+      "contentUrl": "BSCCM-coherent/BSCCM_surface_markers.csv",
+      "encodingFormat": "text/csv",
+      "sha256": "1182a4a19099b744de86be7bf9c22cda82757ace57c972f1881795b541974b7f"
+    },
+    
+    {
+      "@type": "cr:FileObject",
+      "@id": "BSCCM_coherent_tiny_global_metadata",
+      "name": "BSCCM-coherent-tiny Global Metadata",
+      "contentUrl": "BSCCM-coherent-tiny/BSCCM_global_metadata.json",
+      "encodingFormat": "application/json",
+      "sha256": "e9a89f153170d7adaac6b2ac1e74dfb763409c6c85ea5e31aec6eb0e847c5fd4"
+    },
+    {
+      "@type": "cr:FileSet",
+      "@id": "BSCCM_coherent_tiny_zarr_directory",
+      "name": "BSCCM-coherent-tiny Images Zarr Directory",
+      "contentUrl": "BSCCM-coherent-tiny/BSCCM_images.zarr",
+      "encodingFormat": "application/zarr",
+      "includes": "**/*"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "BSCCM_coherent_tiny_index_csv",
+      "name": "BSCCM-coherent-tiny Index",
+      "contentUrl": "BSCCM-coherent-tiny/BSCCM_index.csv",
+      "encodingFormat": "text/csv",
+      "sha256": "2c43413e03f4b54173b082702025540e6543bc826274d13ab14705c2ac586d3a"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "BSCCM_coherent_tiny_surface_markers_csv",
+      "name": "BSCCM-coherent-tiny Surface Markers",
+      "contentUrl": "BSCCM-coherent-tiny/BSCCM_surface_markers.csv",
+      "encodingFormat": "text/csv",
+      "sha256": "e84a4c34edd7d353530daeb7ccd70d1b55548284f501bc96804134644c70a937"
+    }
+  ],
+  "softwareRequirements": {
+    "@type": "SoftwareApplication",
+    "name": "bsccm",
+    "applicationCategory": "Python package",
+    "installURL": "https://pypi.org/project/bsccm/",
+    "description": "The bsccm Python package is required to access and manage this dataset, particularly the zarr format images."
+  },
+
+  "documentation": {
+    "@type": "sc:CreativeWork",
+    "name": "BSCCM Usage Instructions",
+    "text": "This dataset requires the bsccm Python package for access. Install with: `pip install bsccm`. The Croissant provides only provide dataset-level metadata and a description of the resources contained in the dataset (FileObject and FileSet)",
+    "url": "https://github.com/Waller-Lab/BSCCM"
+  }
+}
