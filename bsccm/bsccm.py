@@ -181,7 +181,7 @@ class BSCCM:
         if data_root[-1] != os.sep:
             data_root += os.sep
         self.data_root = data_root
-        self.zarr_dataset = zarr.open(data_root + 'BSCCM_images.zarr', 'r')
+        self.zarr_dataset = zarr.open(data_root + 'BSCCM_images.zarr', mode='r')
         self.index_dataframe = pd.read_csv(data_root + 'BSCCM_index.csv', low_memory=not cache_index, index_col='global_index')
         self.size = len(self.index_dataframe)
         self.fluor_channel_names = self.global_metadata['fluorescence']['channel_names']
@@ -189,7 +189,7 @@ class BSCCM:
         if 'BSCCM_surface_markers.csv' in os.listdir(data_root):
             self.surface_marker_dataframe = pd.read_csv(data_root + 'BSCCM_surface_markers.csv', index_col='global_index')
         if 'BSCCM_backgrounds.zarr' in os.listdir(data_root):
-            self.backgrounds_and_shading = zarr.open(data_root + 'BSCCM_backgrounds.zarr', 'r')
+            self.backgrounds_and_shading = zarr.open(data_root + 'BSCCM_backgrounds.zarr', mode='r')
         print('Opened {}'.format(str(self)))
 
         #TODO: add width and height
